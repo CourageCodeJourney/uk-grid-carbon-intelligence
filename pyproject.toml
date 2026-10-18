@@ -1,0 +1,19 @@
+[project]
+name = "uk-grid-carbon-intelligence"
+version = "0.1.0"
+description = "Data pipeline, ML forecast and AI-ready dashboard for scheduling work when the GB grid is greenest."
+requires-python = ">=3.12"
+authors = [{ name = "Courage Labhani Paul" }]
+license = { text = "MIT" }
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_unreachable = true
+files = ["gridcarbon", "tests"]
+
+# These libraries ship without type information; treat them as untyped.
+[[tool.mypy.overrides]]
+module = ["pandas", "pandas.*", "sklearn", "sklearn.*", "requests", "requests.*"]
+ignore_missing_imports = true
+

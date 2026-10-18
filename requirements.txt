@@ -1,0 +1,8 @@
+# Runtime dependencies (pinned for reproducible builds). Python 3.12 recommended.
+requests==2.32.3
+pandas==2.2.3
+numpy==2.2.6
+scikit-learn==1.6.1
+streamlit==1.45.1
+altair==5.5.0
+tzdata==2025.2

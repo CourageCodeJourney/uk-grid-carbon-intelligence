@@ -1,0 +1,44 @@
+name: Daily pipeline
+
+on:
+  schedule:
+    - cron: "17 6 * * *" # every day at 06:17 UTC
+  workflow_dispatch: # allows a manual run from the Actions tab
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Extract, load, transform and quality-check 90 days
+        run: python -m gridcarbon.pipeline --days 90
+      - name: Train and evaluate the 24h forecast model
+        run: python -m gridcarbon.forecast
+      - name: Publish results to the run summary
+        run: |
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          m = json.load(open("reports/metrics.json"))
+          print("## 24h-ahead forecast accuracy (test set)\n")
+          print("| Forecast | MAE (gCO2/kWh) | RMSE | Within 10% |")
+          print("|---|---|---|---|")
+          for name, key in [("ML model", "model"), ("Naive (yesterday)", "naive"), ("NESO official", "neso")]:
+              r = m.get(key)
+              if r:
+                  print(f"| {name} | {r['mae']} | {r['rmse']} | {r['within_10pct']:.0%} |")
+          print(f"\nSkill vs naive: {m['skill_vs_naive']:.0%}")
+          PY
+      - name: Keep the warehouse and metrics as build artefacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: warehouse-and-metrics
+          path: |
+            data/warehouse.db
+            reports/metrics.json
+          retention-days: 14
